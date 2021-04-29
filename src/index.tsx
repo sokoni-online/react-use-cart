@@ -5,7 +5,7 @@ import useLocalStorage from "./useLocalStorage";
 interface Item {
   id: string;
   discount_price: number;
-  price: number;
+  price?: number;
   quantity?: number;
   itemTotal?: number;
   [key: string]: any;

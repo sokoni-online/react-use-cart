@@ -193,12 +193,12 @@ describe("addItem", () => {
     expect(called).toBe(true);
   });
 
-  test("add item with price", () => {
+  test("add item with discount_price", () => {
     const { result } = renderHook(() => useCart(), {
       wrapper: CartProvider,
     });
 
-    const item = { id: "test", price: 1000 };
+    const item = { id: "test", discount_price: 1000 };
 
     act(() => result.current.addItem(item));
 
