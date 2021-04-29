@@ -1,5 +1,5 @@
 {
-  "name": "react-use-cart",
+  "name": "@africasokoni/react-use-cart",
   "version": "0.0.8",
   "description": "React hook library for managing cart state.",
   "author": "Jamie Barton <jamie@notrab.dev> (https://twitter.com/notrab)",
