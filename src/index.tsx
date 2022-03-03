@@ -61,7 +61,7 @@ export const initialState: any = {
   metadata: {},
 };
 
-const CartContext = React.createContext<CartProviderState | undefined>(
+export const CartContext = React.createContext<CartProviderState | undefined>(
   initialState
 );
 
@@ -147,7 +147,7 @@ const generateCartState = (state = initialState, items: Item[]) => {
     items: calculateItemTotals(items),
     totalItems: calculateTotalItems(items),
     totalUniqueItems,
-    cartTotal: calculateTotal(items),
+    cartTotal: calculateCartTotal(items),
     isEmpty,
   };
 };
@@ -155,11 +155,14 @@ const generateCartState = (state = initialState, items: Item[]) => {
 const calculateItemTotals = (items: Item[]) =>
   items.map(item => ({
     ...item,
-    itemTotal: item.price * item.quantity!,
+    itemTotal: item.discount_price * item.quantity!,
   }));
 
-const calculateTotal = (items: Item[]) =>
-  items.reduce((total, item) => total + item.quantity! * item.price, 0);
+const calculateCartTotal = (items: Item[]) =>
+  items.reduce(
+    (total, item) => total + item.quantity! * item.discount_price,
+    0
+  );
 
 const calculateTotalItems = (items: Item[]) =>
   items.reduce((sum, item) => sum + item.quantity!, 0);
@@ -207,7 +210,7 @@ export const CartProvider: React.FC<{
     saveCart(JSON.stringify(state));
   }, [state, saveCart]);
 
-  const setItems = (items: Item[]) => {
+  const setItems = (items: Item[], callback: (items: Item[]) => void) => {
     dispatch({
       type: "SET_ITEMS",
       payload: items.map(item => ({
@@ -217,16 +220,17 @@ export const CartProvider: React.FC<{
     });
 
     onSetItems && onSetItems(items);
+    callback && callback(items);
   };
 
   const addItem = (item: Item, quantity = 1) => {
-    if (!item.sku) throw new Error("You must provide an `id` for items");
+    if (!item.sku) throw new Error("You must provide an `sku` for items");
     if (quantity <= 0) return;
 
     const currentItem = state.items.find((i: Item) => i.sku === item.sku);
 
-    if (!currentItem && !item.hasOwnProperty("price"))
-      throw new Error("You must pass a `price` for new items");
+    if (!currentItem && !item.hasOwnProperty("discount_price"))
+      throw new Error("You must pass a `discount_price` for new items");
 
     if (!currentItem) {
       const payload = { ...item, quantity };
@@ -234,6 +238,7 @@ export const CartProvider: React.FC<{
       dispatch({ type: "ADD_ITEM", payload });
 
       onItemAdd && onItemAdd(payload);
+      onAddCallback && onAddCallback(item, quantity);
 
       return;
     }
@@ -247,6 +252,7 @@ export const CartProvider: React.FC<{
     });
 
     onItemUpdate && onItemUpdate(payload);
+    onUpdateCallback && onUpdateCallback(item, currentItem.quantity + quantity);
   };
 
   const updateItem = (sku: Item["sku"], payload: object) => {
@@ -257,6 +263,7 @@ export const CartProvider: React.FC<{
     dispatch({ type: "UPDATE_ITEM", sku, payload });
 
     onItemUpdate && onItemUpdate(payload);
+    callback && callback(id, payload);
   };
 
   const updateItemQuantity = (sku: Item["sku"], quantity: number) => {
@@ -281,6 +288,7 @@ export const CartProvider: React.FC<{
     });
 
     onItemUpdate && onItemUpdate(payload);
+    callback && callback(id, quantity);
   };
 
   const removeItem = (sku: Item["sku"]) => {
@@ -289,9 +297,10 @@ export const CartProvider: React.FC<{
     dispatch({ type: "REMOVE_ITEM", sku });
 
     onItemRemove && onItemRemove(id);
+    callback && callback(id);
   };
 
-  const emptyCart = () =>
+  const emptyCart = (callback: () => void) => {
     dispatch({
       type: "EMPTY_CART",
     });
@@ -317,13 +326,18 @@ export const CartProvider: React.FC<{
     });
   };
 
-  const updateCartMetadata = (metadata: Metadata) => {
+  const updateCartMetadata = (
+    metadata: Metadata,
+    callback: (metadata: Metadata) => void
+  ) => {
     if (!metadata) return;
 
     dispatch({
       type: "UPDATE_CART_META",
       payload: metadata,
     });
+
+    callback && callback(metadata);
   };
 
   return (
