@@ -3,7 +3,7 @@ import * as React from "react";
 import useLocalStorage from "./useLocalStorage";
 
 export interface Item {
-  id: string;
+  sku: string;
   price: number;
   quantity?: number;
   itemTotal?: number;
@@ -26,13 +26,13 @@ export interface Metadata {
 
 interface CartProviderState extends InitialState {
   addItem: (item: Item, quantity?: number) => void;
-  removeItem: (id: Item["id"]) => void;
-  updateItem: (id: Item["id"], payload: object) => void;
+  removeItem: (sku: Item["sku"]) => void;
+  updateItem: (sku: Item["sku"], payload: object) => void;
   setItems: (items: Item[]) => void;
-  updateItemQuantity: (id: Item["id"], quantity: number) => void;
+  updateItemQuantity: (sku: Item["sku"], quantity: number) => void;
   emptyCart: () => void;
-  getItem: (id: Item["id"]) => any | undefined;
-  inCart: (id: Item["id"]) => boolean;
+  getItem: (sku: Item["sku"]) => any | undefined;
+  inCart: (sku: Item["sku"]) => boolean;
   clearCartMetadata: () => void;
   setCartMetadata: (metadata: Metadata) => void;
   updateCartMetadata: (metadata: Metadata) => void;
@@ -41,10 +41,10 @@ interface CartProviderState extends InitialState {
 export type Actions =
   | { type: "SET_ITEMS"; payload: Item[] }
   | { type: "ADD_ITEM"; payload: Item }
-  | { type: "REMOVE_ITEM"; id: Item["id"] }
+  | { type: "REMOVE_ITEM"; sku: Item["sku"] }
   | {
       type: "UPDATE_ITEM";
-      id: Item["id"];
+      sku: Item["sku"];
       payload: object;
     }
   | { type: "EMPTY_CART" }
@@ -89,7 +89,7 @@ function reducer(state: CartProviderState, action: Actions) {
 
     case "UPDATE_ITEM": {
       const items = state.items.map((item: Item) => {
-        if (item.id !== action.id) return item;
+        if (item.sku !== action.sku) return item;
 
         return {
           ...item,
@@ -101,7 +101,7 @@ function reducer(state: CartProviderState, action: Actions) {
     }
 
     case "REMOVE_ITEM": {
-      const items = state.items.filter((i: Item) => i.id !== action.id);
+      const items = state.items.filter((i: Item) => i.sku !== action.sku);
 
       return generateCartState(state, items);
     }
@@ -220,10 +220,10 @@ export const CartProvider: React.FC<{
   };
 
   const addItem = (item: Item, quantity = 1) => {
-    if (!item.id) throw new Error("You must provide an `id` for items");
+    if (!item.sku) throw new Error("You must provide an `id` for items");
     if (quantity <= 0) return;
 
-    const currentItem = state.items.find((i: Item) => i.id === item.id);
+    const currentItem = state.items.find((i: Item) => i.sku === item.sku);
 
     if (!currentItem && !item.hasOwnProperty("price"))
       throw new Error("You must pass a `price` for new items");
@@ -242,33 +242,33 @@ export const CartProvider: React.FC<{
 
     dispatch({
       type: "UPDATE_ITEM",
-      id: item.id,
+      sku: item.sku,
       payload,
     });
 
     onItemUpdate && onItemUpdate(payload);
   };
 
-  const updateItem = (id: Item["id"], payload: object) => {
-    if (!id || !payload) {
+  const updateItem = (sku: Item["sku"], payload: object) => {
+    if (!sku || !payload) {
       return;
     }
 
-    dispatch({ type: "UPDATE_ITEM", id, payload });
+    dispatch({ type: "UPDATE_ITEM", sku, payload });
 
     onItemUpdate && onItemUpdate(payload);
   };
 
-  const updateItemQuantity = (id: Item["id"], quantity: number) => {
+  const updateItemQuantity = (sku: Item["sku"], quantity: number) => {
     if (quantity <= 0) {
-      onItemRemove && onItemRemove(id);
+      onItemRemove && onItemRemove(sku);
 
-      dispatch({ type: "REMOVE_ITEM", id });
+      dispatch({ type: "REMOVE_ITEM", sku });
 
       return;
     }
 
-    const currentItem = state.items.find((item: Item) => item.id === id);
+    const currentItem = state.items.find((item: Item) => item.sku === sku);
 
     if (!currentItem) throw new Error("No such item to update");
 
@@ -276,17 +276,17 @@ export const CartProvider: React.FC<{
 
     dispatch({
       type: "UPDATE_ITEM",
-      id,
+      sku,
       payload,
     });
 
     onItemUpdate && onItemUpdate(payload);
   };
 
-  const removeItem = (id: Item["id"]) => {
-    if (!id) return;
+  const removeItem = (sku: Item["sku"]) => {
+    if (!sku) return;
 
-    dispatch({ type: "REMOVE_ITEM", id });
+    dispatch({ type: "REMOVE_ITEM", sku });
 
     onItemRemove && onItemRemove(id);
   };
@@ -296,10 +296,11 @@ export const CartProvider: React.FC<{
       type: "EMPTY_CART",
     });
 
-  const getItem = (id: Item["id"]) =>
-    state.items.find((i: Item) => i.id === id);
+  const getItem = (sku: Item["sku"]) =>
+    state.items.find((i: Item) => i.sku === sku);
 
-  const inCart = (id: Item["id"]) => state.items.some((i: Item) => i.id === id);
+  const inCart = (sku: Item["sku"]) =>
+    state.items.some((i: Item) => i.sku === sku);
 
   const clearCartMetadata = () => {
     dispatch({
