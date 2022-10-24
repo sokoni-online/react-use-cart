@@ -13,6 +13,7 @@ export interface Item {
   id: string;
   discount_price: number;
   itemSku: ItemSku;
+  displayName?: string;
   price?: number;
   quantity?: number;
   itemTotal?: number;
@@ -169,7 +170,7 @@ const generateCartState = (state = initialState, items: Item[]) => {
   return {
     ...initialState,
     ...state,
-    items: calculateItemTotals(items),
+    items: calculateItemTotalsAndSetDisplayName(items),
     totalItems: calculateTotalItems(items),
     totalUniqueItems,
     cartTotal: calculateCartTotal(items),
@@ -182,6 +183,21 @@ const calculateItemTotals = (items: Item[]) =>
     ...item,
     itemTotal: item.itemSku.discount_price * item.quantity!,
   }));
+
+const generateDisplayName = (items: Item[]) => {
+  return items.map(item => {
+    if (!item.hasOwnProperty("displayName")) {
+      item.displayName = item.name;
+    }
+
+    return item;
+  });
+};
+
+const calculateItemTotalsAndSetDisplayName = (items: Item[]) => {
+  const itemsWithDisplayName = generateDisplayName(items);
+  return calculateItemTotals(itemsWithDisplayName);
+};
 
 const calculateCartTotal = (items: Item[]) =>
   items.reduce(
