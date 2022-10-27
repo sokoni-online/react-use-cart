@@ -586,6 +586,7 @@ describe("setItems", () => {
     });
 
     act(() => result.current.setItems(items));
+
     expect(result.current.items).toHaveLength(2);
     expect(result.current.totalItems).toBe(2);
     expect(result.current.totalUniqueItems).toBe(2);
@@ -675,10 +676,37 @@ describe("setItems", () => {
       id: "test-sku",
       discount_price: 2000,
     };
-    const items = [{ id: "test", discount_price: 1000, itemSku }];
+    const items = [
+      { id: "test", name: "test product", discount_price: 1000, itemSku },
+    ];
 
     act(() => result.current.setItems(items));
 
     expect(called).toBe(true);
+  });
+
+  test("generates displayName if one is not provided", () => {
+    const itemSku = {
+      id: "test-sku",
+      discount_price: 2000,
+    };
+    const items = [
+      { id: "test-1", name: "test product 1", discount_price: 1000, itemSku },
+      { id: "test-2", name: "test product 2", discount_price: 1000, itemSku },
+    ];
+
+    const { result } = renderHook(() => useCart(), {
+      wrapper: CartProvider,
+    });
+
+    act(() => result.current.setItems(items));
+
+    expect(result.current.items).toHaveLength(2);
+    expect(result.current.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "test-1", name: "test product 1" }),
+        expect.objectContaining({ id: "test-2", name: "test product 2" }),
+      ])
+    );
   });
 });
